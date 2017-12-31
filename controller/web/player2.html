@@ -4,9 +4,94 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width" />
         <title>controller</title>
-        <script charset="utf-8" src="./js/setFullscreen.js"></script>
-        <script charset="utf-8" src="./js/ajax.js"></script>
-        <link rel="stylesheet" href="./style/player.css" type="text/css" media="all" />
+        <script charset="utf-8" src="./ajax.js"></script>
+	<style>
+	html, body{
+	    width: 100%;
+	    height: 100%;
+	    margin: 0 auto;
+	}
+	#start{
+	    width: 100%;
+	    height: 100%;
+	    background-color: #000;
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+	}
+
+	#start > div{
+	    width: 250px;
+	    height: 250px;
+	    text-align: center;
+	    line-height: 250px;
+	    background-color: #fff;
+	    color: #000;
+	    border-radius: 50%;
+	    font-size: 50px;
+	}
+
+	#container{
+	    display: none;
+	    width: 100%;
+	    height: 100%;
+	    background-color: #000;
+	}
+	#control{
+	    width: 100%;
+	    height: 100%;
+	}
+	#control > section{
+	    float: left;
+	    width: 50%;
+	    height: 100%;
+	}
+	.arrow_wrapper_1{
+	    width: 100%;
+	    height: 35%;
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+	}
+	.arrow_wrapper_2{
+	    width: 50%;
+	    height: 30%;
+	    float: left;
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+	}
+	.AB_wrapper{
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+	    width: 50%;
+	    height: 100%;
+	    float: left;
+	}
+	#A, #B, #up, #left, #right, #down{
+	    line-height: 100%;
+	    width: 60px;
+	    height: 60px;
+	    border-radius: 50%;
+	    background-color: #fff;
+	    text-align: center;
+	}
+	#up > img, #left > img, #right > img, #down > img, #A > img, #B > img{
+	    width: 60px;
+	    height: 60px;
+	}
+	@media screen and (max-width: 479px) {
+	    #control > #arrow{
+		width: 100%;
+		height: 65%;
+	    }
+	    #control > #AB{
+		width: 100%;
+		height: 35%;
+	    }
+	}
+	</style>
     </head>
     <body>
         <div id="start">
@@ -51,6 +136,17 @@
             </div>
         </div>
         <script>
+		function setFullScreen() {
+		    if (document.documentElement.requestFullscreen) {
+			document.documentElement.requestFullscreen();
+		    } else if (document.documentElement.msRequestFullscreen) {
+			document.documentElement.msRequestFullscreen();
+		    } else if (document.documentElement.mozRequestFullScreen) {
+			document.documentElement.mozRequestFullScreen();
+		    } else if (document.documentElement.webkitRequestFullscreen) {
+			document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+		    }
+		}
             function sendmsg(msg) {
                 getAjax(msg, function(data) { console.log(data); });
             }
