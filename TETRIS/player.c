@@ -11,6 +11,5 @@ void PLAYERinit(PLAYER *p) {
     p->tetris_pre.type = 'N';
     STAGEinit(p->stage);
 
-    p->firstround = 7;
 }
 

@@ -18,8 +18,6 @@ extern "C" {
         int ko;
         int bomb;
         int usedPoint;
-        // check first round or not
-        int firstround;
     }PLAYER;
 
     void PLAYERinit(PLAYER*);

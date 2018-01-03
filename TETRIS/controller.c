@@ -4,17 +4,7 @@ bool CONTROLLER_newTetris(PLAYER *p) {
     POSITION pos;
     pos.row = 0;
     pos.col = 2;
-    // for first round
-    int index;
-    if(p->firstround) {
-        while(FirstRound[index = rand() % 7]);
-        FirstRound[index] = true;
-        p->firstround--;
-    }
-    // random
-    else{
-        index = rand() % 7;
-    }
+    int index = rand() % 7;
     TETRISinit(&(p->tetris_cur), TetrisType[index], pos);
     p->tetris_pre.type = 'N';
 
@@ -86,8 +76,5 @@ void CONTROLLER_givebomb(PLAYER *send, PLAYER *recv) {
     int bombRowNum = (send->point - send->usedPoint) / 50;
     send->usedPoint += bombRowNum * 50;
     int bombnum = STAGE_setbomb(recv->stage, recv->bomb, bombRowNum);
-    if(bombnum == 0) {
-        send->ko += 1;
-    }
     recv->bomb = bombnum;
 }

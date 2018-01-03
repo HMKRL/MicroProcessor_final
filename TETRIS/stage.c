@@ -37,7 +37,7 @@ bool STAGE_TETRIScheck(uint8_t stage[][10], TETRISMODULE *pre, TETRISMODULE *cur
 int STAGE_tetrisROWcheck(uint8_t stage[][10], int index) {
     int i, check=0;
     for(i=0; i<10; ++i) {
-        if(stage[index][i]) check++;
+        if(stage[index][i] == 1) check++;
     }
     return check;
 }
