@@ -16,19 +16,20 @@ const int PIC2_RESET_PIN = 5;
 const int PIC3_RESET_PIN = 6;
 
 
-// TIMER1: every 0.1ms enter interrupt
+// TIMER1: every 2ms enter interrupt
 volatile int TMR1flag = 1;
-const int TMR1TOP = 25;
+const int TMR1TOP = 125;
 
 static char recv = '\0';                          // UART
 static int times = 0;                             // count for time game playing(2 min)
 
 static PLAYER p1, p2;                             // player 1, player 2
-static bool p1_ready = false, p2_ready = false;   // status for game(all ready that game start)
-static bool stopGame = false;
+static bool p1_ready, p2_ready;                   // status for game(all ready that game start)
 
-static bool waitForPIC = false;                   // wait PIC send '1' 3 times when updating led
-static bool pic1ok = false, pic2ok = false, pic3ok = false;
+static bool stopGame;
+
+static bool waitForPIC;                           // wait PIC send '1' 3 times when updating led
+static bool pic1ok, pic2ok, pic3ok;
 static bool waitCheck = false;
 static bool pic1waitok = false;
 static bool pic2waitok = false;
@@ -95,15 +96,12 @@ ISR(TIMER1_COMPA_vect) {
             pic3 = Serial3.read();
             if(pic1 == 'S') {
                 pic1waitok = true;
-                //Serial.write("pic1 check ok\r\n");
             }
             if(pic2 == 'S') {
                 pic2waitok = true;
-                //Serial.write("pic2 check ok\r\n");
             }
             if(pic3 == 'S') {
                 pic3waitok = true;
-                //Serial.write("pic3 check ok\r\n");
             }
             if(pic1waitok && pic2waitok && pic3waitok)  {
                 waitForPIC = true;
@@ -111,7 +109,6 @@ ISR(TIMER1_COMPA_vect) {
                 pic1waitok = false;
                 pic2waitok = false;
                 pic3waitok = false;
-                Serial.write("send data\r\n");
                 sendData();
             }
         }else if(!waitForPIC) {
@@ -123,7 +120,6 @@ ISR(TIMER1_COMPA_vect) {
                 // means one second
                 timeCount = 0;
                 times++;
-                
             }
             // detect player1 not doing thing for one second or not
             if(timePlayer1 == 500) {
@@ -138,6 +134,7 @@ ISR(TIMER1_COMPA_vect) {
                             STAGE_cleanAllbomb(p1.stage, p1.bomb);
                             p1.bomb = 0;
                             p2.ko++;
+                            CONTROLLER_newTetris(&p1);
                         }
                     }
                 }
@@ -158,6 +155,7 @@ ISR(TIMER1_COMPA_vect) {
                             STAGE_cleanAllbomb(p2.stage, p2.bomb);
                             p2.bomb = 0;
                             p1.ko++;
+                            CONTROLLER_newTetris(&p2);
                         }
                     }
                 }
@@ -166,37 +164,28 @@ ISR(TIMER1_COMPA_vect) {
                 if(!s_Check) sendCheck();
             }
         }else{
-            Serial.write("wait~");
             char pic1, pic2, pic3;
             pic1 = Serial1.read();
             pic2 = Serial2.read();
             pic3 = Serial3.read();
             if(pic1 == 'E') {
                 pic1ok = true;
-                //Serial.write("pic1 send ok\r\n");
             }
             if(pic2 == 'E') {
                 pic2ok = true;
-                //Serial.write("pic2 send ok\r\n");
             }
             if(pic3 == 'E') {
                 pic3ok = true;
-                //Serial.write("pic3 send ok\r\n");
             }
             if(pic1ok && pic2ok && pic3ok)  {
                 waitForPIC = false;
                 pic1ok = false;
                 pic2ok = false;
                 pic3ok = false;
-                //Serial.write("data send ok\r\n");
-                //Serial.write("data send ok\r\n");
-                //Serial.write("data send ok\r\n");
-                //Serial.write("data send ok\r\n");
                 Serial1.write('E');
                 Serial2.write('E');
                 Serial3.write('E');
                 s_Check = false;
-                
             }
         }
     }
@@ -206,26 +195,24 @@ ISR(TIMER1_COMPA_vect) {
 
 
 void setTimer1() {
-    noInterrupts();          // disable interrupt
+    noInterrupts();             // disable interrupt
     TCCR1A = 0;
     TCCR1B = 0;
-    TCCR1B |= (1 << WGM12);   // CTC mode
-    TCCR1B |= (1 << CS12);    // prescaler == 256
+    TCCR1B |= (1 << WGM12);     // CTC mode
+    TCCR1B |= (1 << CS12);      // prescaler == 256
     OCR1A = TMR1TOP;
-    TCNT1 = 0;      // counter == 0
-    TIMSK1 |= (1 << OCIE1A);   // enable CTC for TIMER1_COMPA_vect
-    interrupts();          // enable interrupt
+    TCNT1 = 0;                  // counter == 0
+    TIMSK1 |= (1 << OCIE1A);    // enable CTC for TIMER1_COMPA_vect
+    interrupts();               // enable interrupt
 }
 
 void gameinit() {
-    times = 0;
-    timePlayer1 = 0;
-    timePlayer2 = 0;
+    times = timePlayer1 = timePlayer2 = 0;
     // player init
     PLAYERinit(&p1);
     PLAYERinit(&p2);
     // stage init
-    STAGEinit(p1.stage);  
+    STAGEinit(p1.stage);
     STAGEinit(p2.stage);
     // led init
     LEDinit(&led);
@@ -233,28 +220,28 @@ void gameinit() {
 }
 
 void gamestart() {
-    Serial.write("waiting...");
+    Serial.write("waiting...\n");
     while(!p1_ready && !p2_ready);
-    Serial.write("run !");
+    Serial.write("run !\n");
     gameinit();
     CONTROLLER_newTetris(&p1);
     CONTROLLER_newTetris(&p2);
     while(times < 120 && !stopGame);
-    return; 
+    return;
 }
 
 void detectInput() {
-    /* 
-     * 
+    /*
+     *
      * d, l, r, a, b => player1
      * D, L, R, A, B => player2
-     * 
+     *
      */
     if(p1_ready && p2_ready && !waitForPIC) {
         switch (recv) {
             // player 1
             case 'L':
-                CONTROLLER_method(&p1, 'L');  
+                CONTROLLER_method(&p1, 'L');
                 stage2led(p1.stage, p2.stage, &led);
                 if(!s_Check) sendCheck();
                 timePlayer1 = 0;
@@ -288,7 +275,7 @@ void detectInput() {
                 CONTROLLER_method(&p1, 'F');
                 stage2led(p1.stage, p2.stage, &led);
                 if(!s_Check) sendCheck();
-                timePlayer1 = 2500;
+                timePlayer1 = 480;
                 break;
             case 'B':
                 CONTROLLER_method(&p1, 'r');
@@ -332,7 +319,7 @@ void detectInput() {
                 CONTROLLER_method(&p2, 'F');
                 stage2led(p1.stage, p2.stage, &led);
                 if(!s_Check) sendCheck();
-                timePlayer2 = 2500;
+                timePlayer2 = 480;
                 break;
             case 'b':
                 CONTROLLER_method(&p2, 'r');
@@ -347,11 +334,11 @@ void detectInput() {
         switch(recv) {
             case 'K':
                 p1_ready = true;
-                Serial.write("p1 go");
+                Serial.write("p1 go\r\n");
                 break;
             case 'k':
                 p2_ready = true;
-                Serial.write("p2 go");
+                Serial.write("p2 go\r\n");
                 break;
         }
     }
@@ -363,51 +350,27 @@ void detectInput() {
 void receiveData(int byteCount) {
     if (Wire.available()) {
         recv = Wire.read();
-        //Serial.write(recv);
     }
 }
 
 void sendCheck() {
     Serial1.write('S');
-    //Serial.write("1 send\r\n");
     Serial2.write('S');
-    //Serial.write("2 send\r\n");
     Serial3.write('S');
-    //Serial.write("3 send\r\n");
-    Serial.write("send check\r\n");
     s_Check = true;
     waitCheck = true;
 }
 
 void sendData () {
-    for(int i=0; i<24; ++i) {
-        Serial1.write(led.red[i/3][i%3]);
-        //Serial1.write(0);
-    }
-    //Serial.write("\r\n");
-    for(int i=0; i<24; ++i) {
-        Serial1.write(led.red[i/3][i%3]);
-        //Serial1.write(0);
-    }
-    //Serial.write("send 1 data~\r\n");
-    for(int i=24; i<48; ++i) {
-        //Serial2.write(0);
-        Serial2.write(led.red[i/3][i%3]);
-    }
-    for(int i=24; i<48; ++i) {
-        Serial2.write(led.red[i/3][i%3]);
-        //Serial2.write(0);
-    }
-    //Serial.write("send 2 data~\r\n");
-    for(int i=48; i<72; ++i) {
-        Serial3.write(led.red[i/3][i%3]);
-        //Serial3.write(0);
-    }
-    for(int i=48; i<72; ++i) {
-        Serial3.write(led.red[i/3][i%3]);
-        //Serial3.write(0);
-    }
-    Serial.write("send all data~\r\n");
+    // send data to first row
+    for(int i=0; i<24; ++i) { Serial1.write(led.red[i/3][i%3]); }
+    for(int i=0; i<24; ++i) { Serial1.write(led.blue[i/3][i%3]); }
+    // send data to second row
+    for(int i=24; i<48; ++i) { Serial2.write(led.red[i/3][i%3]); }
+    for(int i=24; i<48; ++i) { Serial2.write(led.blue[i/3][i%3]); }
+    // send data to third row
+    for(int i=48; i<72; ++i) { Serial3.write(led.red[i/3][i%3]); }
+    for(int i=48; i<72; ++i) { Serial3.write(led.blue[i/3][i%3]); }
     waitForPIC = true;
     return;
 }
