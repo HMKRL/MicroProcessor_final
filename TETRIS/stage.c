@@ -19,17 +19,14 @@ void STAGEinit(uint8_t stage[][10]) {
 }
 
 bool STAGE_TETRIScheck(uint8_t stage[][10], TETRISMODULE *pre, TETRISMODULE *cur) {
-    int i, j;
+    int i, temp_stage[20][10];
+    for(i=0; i<200; ++i) temp_stage[i/10][i%10] = stage[i/10][i%10];
+    for(i=0; i<4; ++i) temp_stage[pre->pos[i].row][pre->pos[i].col] = 0;
     for(i=0; i<4; ++i) {
         // check whether out of range or not
         if(cur->pos[i].row < 0 || cur->pos[i].row > 19 || cur->pos[i].col < 0 || cur->pos[i].col > 9) return false;
         // check whether the space is used or not
-        if(stage[cur->pos[i].row][cur->pos[i].col]) {
-            for(j=0; j<4; ++j) {
-                if(cur->pos[i].row == pre->pos[j].row && cur->pos[i].col == pre->pos[j].col) {
-                    continue;
-                }
-            }
+        if(temp_stage[cur->pos[i].row][cur->pos[i].col]) {
             return false;
         }
     }

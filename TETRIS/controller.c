@@ -1,11 +1,9 @@
 #include "controller.h"
 
-#include <stdio.h>
-
 bool CONTROLLER_newTetris(PLAYER *p) {
     POSITION pos;
     pos.row = 0;
-    pos.col = 4;
+    pos.col = 2;
     // for first round
     int index;
     if(p->firstround) {

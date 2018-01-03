@@ -9,14 +9,15 @@
 void LEDinit(LED *led) {
     int i;
     for(i=0; i<72; ++i) {
-        led->blue[i/3][i%3] = 0;
-        led->red[i/3][i%3] = 0;
+        led->blue[i/3][i%3] = 0x00;
+        led->red[i/3][i%3] = 0x00;
     }
     return;
 }
 
 void stage2led(uint8_t stage1[][10], uint8_t stage2[][10], LED *led) {
     LEDinit(led);
+    
     int i, j;
     /*
      * setting stage
@@ -48,14 +49,14 @@ void stage2led(uint8_t stage1[][10], uint8_t stage2[][10], LED *led) {
                 // second metrix
                 if(stage1[i][j] == 1) {
                     // tetris => red
-                    led->red[i+4][0] |= (1 << (14-j));
+                    led->red[i+4][1] |= (1 << (14-j));
                 }else if(stage1[i][j] == 2) {
                     // bomb => blue
-                    led->blue[i+4][0] |= (1 << (14-j));
+                    led->blue[i+4][1] |= (1 << (14-j));
                 }else if(stage1[i][j] == 3) {
                     // the place clean bomb => red + blue
-                    led->red[i+4][0] |= (1 << (14-j));
-                    led->blue[i+4][0] |= (1 << (14-j));
+                    led->red[i+4][1] |= (1 << (14-j));
+                    led->blue[i+4][1] |= (1 << (14-j));
                 }
             }
         }
@@ -68,27 +69,27 @@ void stage2led(uint8_t stage1[][10], uint8_t stage2[][10], LED *led) {
                 // second metrix
                 if(stage2[i][j] == 1) {
                     // tetris => red
-                    led->red[i+4][0] |= (1 << (2-j));
+                    led->red[i+4][1] |= (1 << (2-j));
                 }else if(stage2[i][j] == 2) {
                     // bomb => blue
-                    led->blue[i+4][0] |= (1 << (2-j));
+                    led->blue[i+4][1] |= (1 << (2-j));
                 }else if(stage2[i][j] == 3) {
                     // the place clean bomb => red + blue
-                    led->red[i+4][0] |= (1 << (2-j));
-                    led->blue[i+4][0] |= (1 << (2-j));
+                    led->red[i+4][1] |= (1 << (2-j));
+                    led->blue[i+4][1] |= (1 << (2-j));
                 }
             }else{
                 // third metrix
                 if(stage2[i][j] == 1) {
                     // tetris => red
-                    led->red[i+4][0] |= (1 << (10-j));
+                    led->red[i+4][2] |= (1 << (10-j));
                 }else if(stage2[i][j] == 2) {
                     // bomb => blue
-                    led->blue[i+4][0] |= (1 << (10-j));
+                    led->blue[i+4][2] |= (1 << (10-j));
                 }else if(stage2[i][j] == 3) {
                     // the place clean bomb => red + blue
-                    led->red[i+4][0] |= (1 << (10-j));
-                    led->blue[i+4][0] |= (1 << (10-j));
+                    led->red[i+4][2] |= (1 << (10-j));
+                    led->blue[i+4][2] |= (1 << (10-j));
                 }
             }
         }
@@ -107,12 +108,20 @@ void finalLed(PLAYER *p1, PLAYER *p2, LED *led) {
         if(p1->point > p2->point)  status = 1;
         else if(p1->point < p2->point) status = 2;
     }
+    uint8_t allLight[20][10], noLight[20][10];
+    for(int i=0; i<200; ++i) {
+      allLight[i/10][i%10] = 3;  
+      noLight[i/10][i%10] = 1;  
+    }
     switch(status) {
         case 1:
+            stage2led(allLight, noLight, led);
             break;
         case 2:
+            stage2led(noLight, allLight, led);
             break;
         case 0:
+            stage2led(allLight, allLight, led);
             break;
         default: break;
     }
