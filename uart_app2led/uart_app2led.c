@@ -52,6 +52,7 @@ static void init()
     TXSTAbits.BRGH = 1;
     SPBRGH = 0;
     SPBRG = 16;
+//    SPBRG = 25;
     /* enable serial port */
     RCSTAbits.SPEN = 1;
     TXSTAbits.TXEN = 1;
@@ -61,8 +62,6 @@ static void init()
     /* enable serial port interrupt */
     GIE  = 1;
     PEIE = 0;
-    TXIP = 1;
-    TXIE = 1;
     RCIP = 1;
     RCIE = 1;
     /* other init */
@@ -93,11 +92,11 @@ static char read_uart()
 void interrupt HI_ISR()
 {
     if (RCIE && RCIF) {
+        RCIE = 0;
         switch (state) {
             case IDLE:
                 if (read_uart() == 'S') {
                     write_uart('S');
-                    
                     state = RED;
                 }
                 break;
@@ -106,7 +105,7 @@ void interrupt HI_ISR()
                     char *red_ptr = &red[0][0] + red_ready++;
                     *red_ptr = read_uart();
                     if (red_ready == NUM_DATA) {
-                       red_ready = 0;
+                        red_ready = 0;
                         state = BLUE;
                     }
                 }
@@ -129,28 +128,29 @@ void interrupt HI_ISR()
                 }
                 break;
         }
+        RCIE = 1;
     }
     
     switch (state) {
-            case IDLE:
-                LATD7 = 0;
-                LATD6 = 0;
-                LATD5 = 0;
-                break;
-            case RED:
-                LATD7 = 0;
-                LATD6 = 0;
-                LATD5 = 1;
-                break;
-            case BLUE:
-                LATD7 = 0;
-                LATD6 = 1;
-                LATD5 = 0;
-                break;
-            case WAIT:
-                LATD7 = 0;
-                LATD6 = 1;
-                LATD5 = 1;
-                break;
-        }
+        case IDLE:
+            LATD7 = 0;
+            LATD6 = 0;
+            LATD5 = 0;
+            break;
+        case RED:
+            LATD7 = 0;
+            LATD6 = 0;
+            LATD5 = 1;
+            break;
+        case BLUE:
+            LATD7 = 0;
+            LATD6 = 1;
+            LATD5 = 0;
+            break;
+        case WAIT:
+            LATD7 = 0;
+            LATD6 = 1;
+            LATD5 = 1;
+            break;
+    }
 }
